@@ -1,0 +1,123 @@
+---
+title: "Coronavirus Preliminary Descriptive Analysis "
+author: "Lealena Befikadu"
+subtitle: 3/15/2020
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+COVID-19 or the 2019 Coronavirus is the new strain of coronavirus that has been the current topic. The new disease was first confirmed in Wuhan, China on December 31, 2019, but it has now spread, and there are 153,523 confirmed cases and 5,736 deaths worldwide (Ritchie, 2020). Coronaviruses are zoonotic, meaning they are transmitted between animals and humans. Although the exact cause of this new strain is unknown, scientists believe it might have come for pangolins or bats in China (Wanda, 2020). Coronaviruses are not a new thing, but this new strain has caused an uproar by how fast and easily it spreads. COVID-19 can spread through person-to-person contact. It can spread between people who are in close contact with an infected person (within 6 feet) and through respiratory droplets produced from the infected person (coughs, sneezes). It is also possible to spread from a person touching a surface or object that the virus is on and then touching their own mouth, nose, or eye. Another reason the disease is spreading so easily is the fact that many confuse its symptoms with the flu or common cold and do not take the necessary precautions. The symptoms for COVID-19 are fever, cough, and shortness of breath. If you have these symptoms, doctors advise you to self-quarantine, monitor your symptoms, stay hydrated, practice good hygiene, rest, and let the virus take its course. There are no vaccines or specific treatment for the virus, but scientists are currently researching to find one. For now, people are advised to avoid close contact with people, wash hands frequently, and clean and disinfect frequently touched surfaces to help prevent the contract of the disease (CDC, 2020).
+
+#Set Up Libraries
+Install the packages to analyze the data.
+
+```{r results='hide', message=FALSE, warning=FALSE}
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(e1071)
+library(tidyr)
+
+```
+
+## Data Cleaning/Preparation
+To understand the COVID-19 and its impact, I prepared this dataset. I first imported coronavirus.xlsx and comorbid.xlsx and created variable names for each file. After assessing the datasets on their own, I decided to merge them to provide a comprehensive analysis. I merged them using an inner join to keep the observations in both files since they are both useful for this analysis. To clean up the data frame, I replaced patients whose ages were 120 or above with “NA” values since that age number is implausible and lessens the quality of the data. I also re-coded the country variable by changing the value ‘Mainland China’ to ‘China’, so that China as a whole can be represented and it can be better analyzed. Cleaning and prepping the data allowed me to have an efficient analysis.
+```{r}
+## Checking current working directory
+getwd()
+
+## set correct working directory
+setwd("/Users/lealenabefikadu/Downloads")
+
+#Q1a
+#import datasets
+corona <- read_excel("coronavirus.xlsx", sheet = "patients")
+comorbid <- read_excel("comorbidity.xlsx", sheet = "disease")
+corona$ID <- as.integer(as.character(corona$ID))
+comorbid$ID <- as.integer(as.character(comorbid$ID))
+
+#Qlb
+#merged the files
+df = inner_join(corona,comorbid, by = "ID")
+```
+
+```{r}
+#Q1c
+#recode age
+newdf <- mutate(df, Age = ifelse(Age >= 120, NA, Age))
+newdf
+```
+
+```{r}
+#Q1d
+#recode country 
+newdf <- mutate(newdf, Country = ifelse(Country == "Mainland China", "China", Country))
+newdf
+ 
+```
+
+## Exploratory Data Analysis
+To investigate the data to find patterns, I first found the number of observations and variables in the combined data frame to better understand my data. The dataset consisted of 1,764 observations and 12 variables. I then chose to look at the percentage of patients who were females to potentially find a pattern or see if there was any connection between sex and the coronavirus. The percentage of patients who were female was 49.89%. To see the age distribution of patients who have coronavirus I calculated the median and found the age to be 28 years old. I then wanted to see what the average age was for the patients who died from the disease, so I found the mean, 28.4 years with a standard deviation of 0.43 years. I wanted to analyze the spread of the disease, so I found the percentage of patients with coronavirus in each country. For China it was 51.3%, for Italy it was 0.5%, and for the United States it was 10.1%. To see the other disease/infections patients who have coronavirus have, I calculated the percentage of each comorbidity associated with the patients. 3.9% of patients with coronavirus also have heart disease. 7.5% of patients with coronavirus also have HIV. 1.9% of patients with coronavirus also have Lupus. 71.3% of patients with coronavirus had no previous illness. These investigations allowed me to potentially find patterns, test assumptions, find outliers, and summarize the main characteristics of the dataset.
+
+```{r}
+#Q2a
+#num of observations
+nrow(newdf)
+
+#Q2b
+#num of variables
+ncol(newdf)
+
+#Q2c
+#percentage of patients are female
+round(prop.table(table(newdf$Sex))*100, digit = 1)
+
+#Q2d
+#median age of patients who have coronavirus
+median(newdf$Age[newdf$CoronaVirus=='1'], na.rm = T)
+
+#Q2e
+#mean age and standard deviation of patients who died from coronavirus
+mean(newdf$Age[newdf$Death=='1'], na.rm = T)
+sd(newdf$Death=='1', na.rm = T)
+
+#Q2f
+#percentage of patients with coronavirus in each country
+round(prop.table(table(newdf$Country[newdf$CoronaVirus=='1']))*100, digit = 1)
+#China: 51.3%
+#Italy: 0.5%
+#US: 10.1%
+
+
+#Q2g
+#the comorbidities (with percentages) associated with patients who have coronavirus
+round(prop.table(table(newdf$Comorbidity[newdf$CoronaVirus=='1']))*100, digit = 1)
+
+```
+
+## Data visualization
+The main focus of the coronavirus is the age of its patients since many want to know the ages that are most affected. In order to display the distribution of the age of patients easily, I created a boxplot. Taking a look at the boxplot, there is a normal distribution between age and patients with coronavirus. 	
+```{r}
+# a. boxplot of the age by coronavirus 
+ggplot(data=newdf) +
+    geom_boxplot(mapping = aes(x=as.factor(CoronaVirus), y=Age,fill=as.factor(CoronaVirus))) +
+   labs(title="Patient Age by Coronavirus",x="Coronavirus (0=No, 1=Yes)", y = "Age", fill="Coronavirus")
+
+```
+
+## References
+CDC. (2020, March 10). Prevention of Coronavirus Disease 2019 (COVID-19). Retrieved from
+https://www.cdc.gov/coronavirus/2019-ncov/prepare/prevention.html
+ 
+Makotter, Wanda. (2020, March 12). Scientists are still searching for the source of COVID-19: 
+why it matters. Retrieved from https://www.cnbcafrica.com/coronavirus/2020/03/12/362982/
+
+Ritchie, H. (2020). Coronavirus Source Data – WHO Situation Reports. Retrieved from 
+https://ourworldindata.org/coronavirus-source-data
+ 
+
