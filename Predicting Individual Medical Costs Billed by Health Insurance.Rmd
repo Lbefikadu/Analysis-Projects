@@ -1,0 +1,144 @@
+---
+title: "Linear Regression - Predicting Individual Medical Costs Billed by Health Insurance"
+author: "Lealena Befikadu"
+subtitle: 4/18/2020
+output:
+  html_document: default
+  pdf_document: default
+---
+
+## Exploratory Data Analysis
+While analyzing the "insurance.csv" dataset, I found there to be 1338 observations and 7 variables. The categorical variables in the dataset are: sex (insurance contractor gender), smoker (smoking status), region (beneficiary's residential area), and children (number of dependents). For the sex variable, the highest percentage was male with 50.5%. For the smoker variable, the highest percentage was no (or don't smoke) with 79.5%. For the region variable, the highest percentage was southeast with 27.2%. For the children variable, the highest percentage was 0 number of children covered by health insurance/number of dependents with 42.9%. The continuous variables in the dataset are: age, bmi, and charges. The mean for age is 39.2 with a standard deviation of 14.0. The mean for bmi is 30.7 with a standard deviation of 6.1. The mean for individual medical costs billed by health insurance is 13270.4 with a standard deviation of 12110.0.
+```{r warning=FALSE, message=FALSE}
+# insert import & exploratory data analysis code here
+#call libraries
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+
+#set working directory
+setwd("/Users/lealenabefikadu/Downloads")   
+#read file 
+insure <- read.csv("insurance.csv", header = TRUE)
+
+#num of observations
+nrow(insure)
+#num of variables
+ncol(insure)
+
+#categorical variables percentages
+round(prop.table(table(insure$sex))*100, digit = 1)
+round(prop.table(table(insure$smoker))*100, digit = 1)
+round(prop.table(table(insure$region))*100, digit = 1)
+round(prop.table(table(insure$children))*100, digit = 1)
+
+#continuous variables mean and sd
+round(mean(insure$age), digit = 1)
+round(mean(insure$bmi), digit = 1)
+round(mean(insure$charges), digit = 1)
+round(sd(insure$age), digit = 1)
+round(sd(insure$bmi), digit = 1)
+round(sd(insure$charges), digit = 1)
+
+```
+
+
+## Data Visualization
+For Figure 1, the box plot of health insurance charges by insurance contractor gender shows a slightly higher median in the average individual medical costs billed by health insurance for females than males.
+
+For Figure 2, the box plot of health insurance charges by smoking status shows a subtantially higher median in the average individual medical costs billed by health insurance for individuals who smoke than for individuals who do not smoke 
+
+For Figure 3, the box plot of health insurance charges by the beneficiary's residential area shows a slightly higher median in average individual medical costs billed by health insurance for beneficiaries who live in the northeast region than beneficiaries in the northwest, southeast, and southwest regions.
+
+For Figure 4, the box plot of health insurance charges by number of children covered by health insurance shows a slightly higher median in average individual medical costs billed by health insurance for 4 number of children that are covered by health insurance than for another other number of dependents.
+
+For Figure 5, the scatter plot of bmi and health insurance charges show no correlation between body mass index and the average individual medical costs billed by health insurance.
+
+For Figure 6, the scatterplot of age of primary beneficiary and health insurance charges shows that there is no set charge for each age but it also shows a somewhat positive correlation between age of primary beneficiary and the average individual medical costs billed by health insurance.
+
+**Figure 1**
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+# insert data visualization code here
+ggplot(data=insure) +
+    geom_boxplot(mapping = aes(x=sex, y=charges,fill=sex))+
+       labs(title="Comparison of Health Insurance Charges by Insurance Contractor Gender",x="Insurance Contractor Gender", y = "Individual Medical Costs Billed by Health Insurance (dollars)", fill="Sex")
+```
+
+
+
+
+**Figure 2**
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+ggplot(data=insure) +
+    geom_boxplot(mapping = aes(x=smoker, y=charges,fill=smoker))+
+       labs(title="Comparison of Health Insurance Charges by Smoking Status",x="Smoking Status", y = "Individual Medical Costs Billed by Health Insurance (dollars)", fill="Smoking Status")
+```
+
+
+
+
+**Figure 3**
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+ggplot(data=insure) +
+    geom_boxplot(mapping = aes(x=region, y=charges,fill=region))+
+       labs(title="Comparison of Health Insurance Charges by Beneficiary's Residential Area",x="Beneficiary's Residential Area", y = "Individual Medical Costs Billed by Health Insurance (dollars)", fill="Region")
+```
+
+
+
+
+**Figure 4**
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+ggplot(data=insure) +
+    geom_boxplot(mapping = aes(x=factor(children), y=charges,fill=factor(children)))+
+       labs(title="Comparison of Health Insurance Charges by Number of Children Covered",x="# of Children Dependents", y = "Individual Medical Costs Billed by Health Insurance (dollars)", fill="# of Children Dependents")
+```
+
+
+
+
+**Figure 5**
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+ggplot(data=insure) +
+    geom_point(mapping = aes(x=bmi, y=charges)) +
+  labs(title="Plot of Health Insurance Charges by Body Mass Index",x="Body Mass Index", y = "Individual Medical Costs Billed by Health Insurance (dollars)")
+```
+
+
+
+
+**Figure 6**
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+ggplot(data=insure) +
+    geom_point(mapping = aes(x=age, y=charges)) +
+  labs(title="Plot of Health Insurance Charges by Age of Primary Beneficiary",x="Age of Primary Beneficiary", y = "Individual Medical Costs Billed by Health Insurance (dollars)")
+```
+
+
+## Multiple Linear Regression Results
+We ran a multiple linear regression model on the dataset and found that: 
+For a 1 year increase in age of primary beneficiary, the average individual medical costs billed by health insurance increases by an average 257.2 dollars, holding all other variables in the model constant. 
+For a 1 unit increase in bmi, the average individual medical costs billed by health insurance increases by an average 336.9 dollars, holding all other variables in the model constant. 
+The average individual medical costs billed by health insurance is 128.2 dollars lower in males than females, holding all other variables in the model constant. 
+The average individual medical costs billed by health insurance is 23836.4 dollars higher in individuals who smoke than individuals who do not smoke, holding all other variables in the model constant. 
+The average individual medical costs billed by health insurance is 380.0 dollars lower in beneficiaries who live in the northwest region than beneficiaries who live in the northeast region, holding all other variables in the model constant. 
+The average individual medical costs billed by health insurance is 1033.1 dollars lower in beneficiaries who live in the southeast region than beneficiaries who live in the northeast region, holding all other variables in the model constant. 
+The average individual medical costs billed by health insurance is 952.9 dollars lower in beneficiaries who live in the southwest region than beneficiaries who live in the northeast region, holding all other variables in the model constant.
+```{r warning=FALSE}
+# insert linear regression code
+lm(formula = charges ~ age + bmi + factor(sex) + factor(smoker) + factor(region) + factor(children), data = insure)
+
+```
+
+## Linear Regression Assumptions
+After plotting the regression model, I can conclude that the homoscedasticity assumption was violated because looking at the Scale-Location graph, the red line has a slightly positive slope to it and the data points are not equally spread out.
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+# insert regression assumption plots code
+
+model <- lm(formula = charges ~ age + bmi + factor(sex) + factor(smoker) + factor(region) + factor(children), data = insure)
+
+plot(model)
+
+```
+
