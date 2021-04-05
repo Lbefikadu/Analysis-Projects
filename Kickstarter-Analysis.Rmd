@@ -1,0 +1,106 @@
+---
+title: "Kickstarter Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### This analysis is on predicting the state of a kickstarter: failed vs successful, using data from the kickstarter platform
+
+
+## Data Preparation
+
+```{r message=FALSE, warning=FALSE}
+#First make sure you install/load rattle and caret and other necessary packages
+#install.packages('rattle')
+#install.packages('caret', dependencies = TRUE)
+#install.packages('Rcpp')
+#install.packages('e1071')
+library(rpart)
+library(rpart.plot)
+library(rattle)
+library(caret)
+library(dplyr)
+library(Rcpp)
+library(e1071)
+
+#read in 'kickstarter' file
+kickstarter <- read.csv('~/Downloads/kickstarter.csv', header = TRUE, row.names = 1)
+
+#cleaning the dataset by removing all NA rows.
+kickstarter_clean <- na.omit(kickstarter)
+
+#making sure you have the right variable types
+summary(kickstarter_clean)
+
+```
+
+## Split Dataset
+
+#### We want to use validation to make sure our model doesn't overfit. To do this, we'll want to split up our dataset into what we call **train** and **test** sets. Then we'll run our model with the training sets. The most basic way to do this is to get a random sample of indices, then just select the appropriate rows. Here, we'll take a random 20% of the dataset and set that aside as our "test" dataset. 
+
+```{r pressure, echo=FALSE}
+#Splitting the data into 20% test set and 80% train set
+
+#Find what 20% is (we use floor to have a round number)
+num_test <- floor(nrow(kickstarter_clean) * 0.2)
+
+#Sample the indices
+test_rows <- sample(1:nrow(kickstarter_clean),num_test)
+
+#Create test set with indices
+test_kickstarter <- kickstarter_clean[test_rows,]
+
+#Create train set with the rest(80%)
+train_kickstarter <- kickstarter_clean[-test_rows,]
+```
+
+## Tree Model
+
+```{r}
+#Running a tree model to predict state (failed vs successful) using goal, country, and main category as the features
+treemod <- rpart(state ~ goal + country + main_category, 
+                 data = train_kickstarter, 
+                 method = 'class', 
+                 control = rpart.control(minsplit = 25))
+
+#The fancy tree visualization
+fancyRpartPlot(treemod, sub = "")
+```
+
+## Evaluating the Model
+
+#### Now that we have a model, we need to test it. We can get predictions using the `predict` function.
+
+```{r}
+#This gives us the prediction scores for both failed and success
+pred <- predict(treemod, test_kickstarter)
+#Success prediction score
+test_kickstarter$success_score <- pred[,2]
+test_pred <- test_kickstarter %>% select(state, success_score)
+
+#Converting from the scores to an actual prediction using 40% threshold
+test_pred <- test_pred %>% arrange(desc(success_score))
+test_pred$pred <- 0
+
+top_scores <- floor(nrow(test_pred)*0.4)
+test_pred$pred[1:top_scores] <- 1
+
+```
+
+
+## Confusion Matrix/Precision and Recall
+
+```{r}
+
+pred_tab <- table(test_pred$pred,test_pred$state)
+#sometimes the confusionmatrix command won't run if original values weren't labeled with '0' and '1' so set them
+dimnames(pred_tab)[[2]] = c("0","1")
+
+confusionMatrix(pred_tab, positive = "1")
+precision(pred_tab, relevant = '1')
+recall(pred_tab, relevant = '1')
+```
+#### The precision and recall were both around 0.5 which is bad because that means the model only predicts successful projects correctly half of the time and it could only recover around 50% of actual positives.
